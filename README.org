@@ -1,0 +1,36 @@
+Introduction to R programming for criminology
+
+** Overview of topics to discuss
+
+- What is R? 15 minutes. Motivating examples about what you can do
+  with R. Obtaining R. Interfaces to R. Command line, RStudio.
+- What are R packages? 15 minutes. Installing packages. Attaching
+  packages. Task views.
+- Essential packages for data analysis and visualization -- data.table
+  and ggplot2.
+- Tall=tidy and wide versions of the same data set. Converting between them using 
+
+** What are R packages?
+
+R packages contain R code and data sets which extend the functionality
+of R. There are thousands of R packages, each with different
+functions, developed by different people. For example in this tutorial
+we will discuss the [[https://CRAN.R-project.org/package=data.table][data.table]] package.
+
+CRAN is the Comprehensive R Archive Network, a set of identical web
+sites from which R and R packages can be downloaded. mirrored from http://cran.r-project.org. For example the closest
+mirror to us is http://cran.utstat.utoronto.ca/ 
+
+** Getting help
+
+?topic == help(topic) or ??pattern == help.search("pattern")
+
+** Reading data into R
+
+utils::read.table and utils::read.csv
+
+** Converting between tall and wide data
+
+Examples taken from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]].
+
+Tidy data JSS paper https://www.jstatsoft.org/article/view/v059i10
