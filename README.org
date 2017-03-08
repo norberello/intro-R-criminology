@@ -2,32 +2,125 @@ Introduction to R programming for criminology
 
 ** Overview of topics to discuss
 
-- What is R? 15 minutes. Motivating examples about what you can do
-  with R. Obtaining R. Interfaces to R. Command line, RStudio.
-- What are R packages? 15 minutes. Installing packages. Attaching
+- What is R? 30 minutes. Brief history. Motivating examples. Obtaining
+  R. Interfaces to R. Getting interactive help.
+- What are R packages? 20 minutes. Installing packages. Attaching
   packages. Task views.
 - Essential packages for data analysis and visualization -- data.table
   and ggplot2.
-- Tall=tidy and wide versions of the same data set. Converting between them using 
+- Tall=tidy=long and wide versions of the same data set. Converting
+  between them using
 
-** What are R packages?
+** What is R? 20 minutes
+
+*** Brief history
+
+R is a free/open-source programming language and environment for data
+analysis and visualization. It is a free/open-source implementation of
+the S language, which was originally created by John Chambers at Bell
+Labs in the 1970s. S was sold as commercial software starting in the
+1980s (like SPSS 1968, SAS 1976, STATA 1985). Then in 1993 Ross Ihaka
+and Robert Gentlement decided to write R, a new free/open-source
+implementation of S. Now there are over a dozen [[https://www.r-project.org/contributors.html][R Core team members]]
+(mostly statistics researchers and professors), who are responsible
+for the development of the base R system.
+
+*** Some motivating examples about what you can do with R
+
+The main reason to use R these days is that there are so many other
+people using it. So R is likely the first place that new,
+state-of-the-art data analysis software will appear.
+
+- In this tutorial we will discuss [[http://ggplot2.org/][ggplot2]], an implementation of
+  Wilkinson's Grammar of Graphics. It is a great package for static
+  data visualization (making figures for your papers).
+- I have been working on a package for [[https://github.com/tdhock/animint][animated interactive data
+  visualization]].
+- There are many packages for machine learning in R ([[https://cran.r-project.org/web/packages/mlr/vignettes/mlr.html][mlr]], [[https://topepo.github.io/caret/][caret]]).
+
+*** Obtaining R
+
+CRAN is the Comprehensive R Archive Network, a set of identical web
+sites from which R and its packages can be downloaded. All the web
+sites are copied from http://cran.r-project.org, but for speed you
+should use the mirror which is closest to you (in Montreal the closest
+is currently in [[http://cran.utstat.utoronto.ca/][Toronto]]).
+
+*** Command line versus graphical user interface
+
+R has a command line interface. So you can either (1) type R code
+interactively at the R command line, or (2) type R code into a plain
+text file (an R script) and then execute that file in R.
+
+RStudio is a graphical user interface for R (developed by the RStudio
+company, not by the R Core Team). It simplifies writing and executing
+R code. It is recommended to use RStudio for this tutorial.
+
+*** Getting interactive help
+
+To see an example of how to use an R function =FUN=, use
+=example(FUN)=. *Exercise:* open an R session on the command line or
+in RStudio. Execute the following line of code to see an example of
+how to compute the sample mean using the =mean= function.
+
+#+BEGIN_SRC R
+example(mean)
+#+END_SRC
+
+Note: we say that we are calling the function =example= with the
+argument =mean=.
+
+** What are R packages? 20 minutes
 
 R packages contain R code and data sets which extend the functionality
 of R. There are thousands of R packages, each with different
 functions, developed by different people. For example in this tutorial
 we will discuss the [[https://CRAN.R-project.org/package=data.table][data.table]] package.
 
-CRAN is the Comprehensive R Archive Network, a set of identical web
-sites from which R and R packages can be downloaded. mirrored from http://cran.r-project.org. For example the closest
-mirror to us is http://cran.utstat.utoronto.ca/ 
+*Exercise:* to check if the data.table package is installed, type the
+following on the command line:
 
-** Getting help
+#+BEGIN_SRC R
+  library(data.table)
+#+END_SRC
 
-?topic == help(topic) or ??pattern == help.search("pattern")
+If the package is not present, there will be an error message
 
-** Reading data into R
+#+BEGIN_SRC R
+Error in library(data.table) : there is no package called ‘data.table’
+#+END_SRC
 
-utils::read.table and utils::read.csv
+Whenever you get an error message, you can usually get more
+information about what that error means by looking up the help page of
+the function that you were using. *Exercise:* use the help system to
+figure out where the =library= function looks for packages. Type one
+of the following on the command line to get help on the =library=
+function. Hint: check the =lib.loc= argument.
+
+#+BEGIN_SRC R
+  ?library
+  help(library)
+  help("library")
+#+END_SRC
+
+*Exercise:* what is the difference between =library= and ="library"=?
+=library= is a function and ="library"= is a character string. To see
+a brief description of any R object, use the =str= function:
+
+#+BEGIN_SRC R
+  str(library)
+  str("library")
+#+END_SRC
+
+** Reading dates 
+
+https://github.com/tdhock/montreal-velos/blob/master/velos.R
+
+** Data input, subsetting, and output
+
+utils::read.table and utils::read.csv are the functions provided by
+the base R system for reading data tables into R's memory. relatively
+slow and difficult to use, compared to data.table::fread.
 
 ** Converting between tall and wide data
 
