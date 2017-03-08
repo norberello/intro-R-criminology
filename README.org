@@ -2,16 +2,16 @@ Introduction to R programming for criminology
 
 ** Overview of topics to discuss
 
-- What is R? 30 minutes. Brief history. Motivating examples. Obtaining
+- What is R? 30 minutes. Brief history. Why use R? Obtaining
   R. Interfaces to R. Getting interactive help.
-- What are R packages? 20 minutes. Installing packages. Attaching
+- What are R packages? 30 minutes. Installing packages. Attaching
   packages. Task views.
 - Essential packages for data analysis and visualization -- data.table
   and ggplot2.
-- Tall=tidy=long and wide versions of the same data set. Converting
-  between them using
+- Converting between Tall=tidy=long and wide versions of the same data
+  set.
 
-** What is R? 20 minutes
+** What is R? 
 
 *** Brief history
 
@@ -25,18 +25,49 @@ implementation of S. Now there are over a dozen [[https://www.r-project.org/cont
 (mostly statistics researchers and professors), who are responsible
 for the development of the base R system.
 
-*** Some motivating examples about what you can do with R
+*** Why use R? 
 
-The main reason to use R these days is that there are so many other
-people using it. So R is likely the first place that new,
-state-of-the-art data analysis software will appear.
+*R is free, unlike most other statistical software.* If you know how
+to use other statistical software (SPSS, SAS, STATA), and you want to
+learn R, try reading [[http://www.burns-stat.com/documents/tutorials/r-relative-to-statistical-packages/][R Relative to Statistical Packages]] and the links
+therein. The final quote by Jonathan Baron is
 
+#+BEGIN_SRC 
+Another point, which I repeatedly make to students, is that R is free
+and will continue to exist. Nothing can make it go away. Once you
+learn it, you are no longer subject to price increases (e.g., from
+zero, when, as a grad student, you use your advisor’s copy of SAS, to
+several hundred dollars or more after you leave). You can take it with
+you wherever you go. The investment in learning thus has a long-term
+payoff.
+#+END_SRC
+
+Note that R is free software both in the sense of "free beer" (no
+cost), and "free speech" (you can do whatever you want with it -- this
+includes viewing, copying, and modifying the source code).
+
+*R is a programming language*, which means you can use it to do any
+computations you want (see [[http://www.burns-stat.com/documents/tutorials/impatient-r/more-r-blank-screen-syndrome/][More R Blank Screen Syndrome]], part of
+Impatient R by Pat Burns).
+
+*R is likely the first place that new, state-of-the-art data analysis
+software will appear.* This is mainly because there are so many other
+people using it -- since R is free, anyone can contribute to improving
+it. Pieces of software that extend R are called "packages" which are
+useful for all sorts of things, for example
+
+- There are many packages for machine learning in R ([[https://cran.r-project.org/web/packages/mlr/vignettes/mlr.html][mlr]], [[https://topepo.github.io/caret/][caret]]).
+- My research project involves developing new machine learning models
+  for genomic data, including my recent work on the first log-linear
+  time algorithm for constrained optimal segmentation ([[https://github.com/tdhock/coseg][coseg]]).
 - In this tutorial we will discuss [[http://ggplot2.org/][ggplot2]], an implementation of
   Wilkinson's Grammar of Graphics. It is a great package for static
   data visualization (making figures for your papers).
-- I have been working on a package for [[https://github.com/tdhock/animint][animated interactive data
-  visualization]].
-- There are many packages for machine learning in R ([[https://cran.r-project.org/web/packages/mlr/vignettes/mlr.html][mlr]], [[https://topepo.github.io/caret/][caret]]).
+- Since 2013 my Google Summer of Code students have been helping me to
+  develop [[https://github.com/tdhock/animint][animint, a package for animated interactive data
+  visualization]]. It can be used to create interactive web graphics for
+  all kinds of data ([[http://members.cbio.mines-paristech.fr/~thocking/WorldBank-facets/][World Bank life expectancy and fertility rate]],
+  [[http://members.cbio.mines-paristech.fr/~thocking/figure-timeseries/][temperature in my bioinformatics office]]).
 
 *** Obtaining R
 
@@ -70,7 +101,7 @@ example(mean)
 Note: we say that we are calling the function =example= with the
 argument =mean=.
 
-** What are R packages? 20 minutes
+** What are R packages? 
 
 R packages contain R code and data sets which extend the functionality
 of R. There are thousands of R packages, each with different
@@ -112,9 +143,21 @@ a brief description of any R object, use the =str= function:
   str("library")
 #+END_SRC
 
-** Reading dates 
+** Reading date and times into R
+
+=fread= converts a date/time column in a CSV file to a character
+vector columns of a =data.table=. The =strptime= function can be used
+to convert most date/time strings to numeric format. One example of
+when this doesn't work is
 
 https://github.com/tdhock/montreal-velos/blob/master/velos.R
+
+Some packages that attempt to simplify reading of dates and times are
+[[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
+
+** Named capture regular expressions
+
+https://github.com/tdhock/regex-tutorial
 
 ** Data input, subsetting, and output
 
@@ -122,8 +165,19 @@ utils::read.table and utils::read.csv are the functions provided by
 the base R system for reading data tables into R's memory. relatively
 slow and difficult to use, compared to data.table::fread.
 
+** Reading and writing files from other programs in R
+
+SAS, SPSS, STATA http://haven.tidyverse.org/
+
+Excel -- just save as CSV. Or use http://readxl.tidyverse.org/
+
 ** Converting between tall and wide data
+
+TODO: example using one of our data sets
 
 Examples taken from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]].
 
 Tidy data JSS paper https://www.jstatsoft.org/article/view/v059i10
+
+** Other example using criminology data.
+
