@@ -101,6 +101,54 @@ example(mean)
 Note: we say that we are calling the function =example= with the
 argument =mean=.
 
+*** R is a vectorized language
+
+We say that R is a vectorized language because most data in R is a
+*vector* (with N > 1 elements). For example the variable =x <- c(0:10, 50)=
+is a numeric vector of length 12.
+
+#+BEGIN_SRC R
+  x <- c(0:10, 50)
+  x
+  str(x)
+#+END_SRC
+
+Note that 
+- =:= is the colon operator, for constructing a sequence (in this case
+  the integers from 0 to 10).
+- =c= is a function that *c*oncatenates its arguments (separated by
+  commas) into a vector. =0:10= is the first argument and =50= is the
+  second argument.
+- =<-= is the assignment operator that takes the value on the right
+  and assigns it to the variable name on the left. When I read it, I
+  think "gets" or "is assigned the value of" (like an arrow pointing
+  left, not less than minus).
+- =str= is a function that prints the *str*ucture of any R object.
+
+*Exercise:* create a vector of integers from 50 to 65, then store it
+in the variable =positive.vec=. Create another vectors of integers
+from -10 to -5, then store it in the variable
+=negative.vec=. Concatenate these two vectors and store the result in
+a new variable called =positive.and.negative.vec=. Use =str= on the
+new variables that you have created. What differences are there with
+the output of =str(x)=?
+
+Note: you can get help about any function in R using =help("name of
+the function")=, for example =help("<-")= or =help(":")=.
+
+*Exercise:* what is the difference between =library= and ="library"=?
+=library= is a function and ="library"= is a character string. To see
+a brief description of any R object, use the =str= function:
+
+#+BEGIN_SRC R
+  str(library)
+  str("library")
+#+END_SRC
+
+So when we use call the =mean= function with  This constrasts
+other languages like C where computations must be expressed in terms
+of *scalars* (variables each with 1 element).
+
 ** What are R packages? 
 
 R packages contain R code and data sets which extend the functionality
@@ -124,35 +172,111 @@ Error in library(data.table) : there is no package called ‘data.table’
 Whenever you get an error message, you can usually get more
 information about what that error means by looking up the help page of
 the function that you were using. *Exercise:* use the help system to
-figure out where the =library= function looks for packages. Type one
-of the following on the command line to get help on the =library=
-function. Hint: check the =lib.loc= argument.
+figure out where the =library= function looks for packages. Hint:
+check the =lib.loc= argument.
+
+*** install.packages from CRAN to your computer
+
+=install.packages("data.table")= means "download the most recent
+version of the data.table package from CRAN, and install it for use on
+my local computer." *Exercise:* install the data.table package.
+
+More precisely, =install.packages= looks for the package in the web
+sites listed in
 
 #+BEGIN_SRC R
-  ?library
-  help(library)
-  help("library")
+  getOption("repos")
 #+END_SRC
 
-*Exercise:* what is the difference between =library= and ="library"=?
-=library= is a function and ="library"= is a character string. To see
-a brief description of any R object, use the =str= function:
+and installs the first package it finds to the first item of
+=.libPaths()=. Note that the =repos= option in RStudio defaults to
+"https://cran.rstudio.com" and can be changed in Tools -> Global
+Options -> Packages -> CRAN mirror. If you don't use RStudio, you can
+use the R code
 
 #+BEGIN_SRC R
-  str(library)
-  str("library")
+options(repos=c(
+          "http://www.bioconductor.org/packages/release/bioc",
+          "http://r-forge.r-project.org",
+          "http://probability.ca/cran",
+          "http://cran.r-project.org"))
 #+END_SRC
+
+Note: if you put the above code in your =~/.Rprofile= file, it will be
+executed every time R is started. The =~= means "home directory" and
+it can be found on your computer via the R command
+
+#+BEGIN_SRC R
+normalizePath("~")
+#+END_SRC
+
+*** install_github packages to your computer
+
+Some new versions of CRAN packages can be downloaded from GitHub. For
+example a newer version of data.table is available from
+https://github.com/Rdatatable/data.table and installable via the R
+commands
+
+#+BEGIN_SRC R
+remotes::install_github("Rdatatable/data.table")
+devtools::install_github("Rdatatable/data.table")
+#+END_SRC
+
+The double colon syntax means =package::object= -- in this case it
+means that both the =remotes= and the =devtools= packages contain a
+function called =install_github=. Both should work for installing
+packages from GitHub.
+
+*Exercise:* install the =namedCapture= package from one of my github
+repositories, https://github.com/tdhock/namedCapture. Hint: you will
+first need to use =install.packages= to get a copy of either =remotes=
+or =devtools=.
+
+Caveat: some R packages contain compiled code. Packages with compiled
+code are compiled to binary form for you on CRAN, but not on
+GitHub. So if you want to install one of these packages from GitHub,
+your computer will need a compiler.
+- Windows Rtools http://cran.r-project.org/bin/windows/Rtools/
+- Mac Xcode https://developer.apple.com/downloads
+- Linux usually has compilation tools by default, but you may need to
+  install a package called =r-devel= or =r-base-dev=.
+
+*** How to find other packages?
+
+- [[https://cran.r-project.org/web/views/][Task views]] are topic-based lists of packages.
+- There are various local ([[http://www.meetup.com/Montreal-R-User-Group/][Montreal R User Group]], [[http://raquebec.ulaval.ca/2017/][R à QC]]) and
+  international meetings ([[https://user2017.brussels/][useR2017 in Brussels]]).
+- Community news sites: [[https://www.r-bloggers.com/][R-Bloggers]], [[https://rweekly.org/][RWeekly]].
+
+*** Section summary
+
+- =library=
+- install.packages downloads packages from CRAN-like 
 
 ** Reading date and times into R
 
 =fread= converts a date/time column in a CSV file to a character
 vector columns of a =data.table=. The =strptime= function can be used
-to convert most date/time strings to numeric format. One example of
-when this doesn't work is
+to convert most date/time strings to numeric format. 
 
-https://github.com/tdhock/montreal-velos/blob/master/velos.R
+Criminology data example [[file:transactions.txt]]
 
-Some packages that attempt to simplify reading of dates and times are
+#+BEGIN_SRC 
+seller buyer date
+567    577   2007-10-30
+225    567   2007-11-15
+1019   1190  2007-11-19
+2      983   2007-11-26
+2      983   2007-11-27
+567    1257  2007-11-28
+#+END_SRC
+
+one data set when strptime did not work for me is
+https://github.com/tdhock/montreal-velos/blob/master/velos.R -- I had
+to use a character vector to convert non-standard month names to
+numeric dates.
+
+*Packages* that attempt to simplify reading of dates and times are
 [[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
 
 ** Named capture regular expressions
