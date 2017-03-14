@@ -1,5 +1,7 @@
 Introduction to R programming for criminology
 
+DOWNLOAD LINK: https://github.com/tdhock/intro-R-criminology/archive/master.zip
+
 ** Overview of topics to discuss
 
 - What is R? Brief history. Why use R? Obtaining R. Interfaces to
@@ -10,7 +12,8 @@ Introduction to R programming for criminology
   GitHub. Attaching packages. How to find packages?
 - data.table, an efficient package for data manipulation.
 - Extra topics: data visualization using the ggplot2 package,
-  dates/times, regular expressions, reading/writing STATA/SPSS/SAS files in R.
+  dates/times, regular expressions, reading/writing STATA/SPSS/SAS
+  files in R, for/while/if.
 
 ** What is R? 
    
@@ -270,7 +273,7 @@ exactly one element:
 #+END_SRC
 
 *Exercise:* select one of the other elements of =birth.year.vec=,
-using either names or numbers.
+using a name or a number.
 
 *Exercise:* what are some names and numbers that you think should not
 work? Why? Try them.
@@ -284,6 +287,10 @@ elements:
   birth.year.vec[-1]
   birth.year.vec[0]
 #+END_SRC
+
+*Exercise:* select another subset (say Toby and Morgan) using a
+variable. Hint: use the =<-= assignment operator to assign a name or
+number to a new variable name.
 
 *Exercise:* what happens when you use missing values, large numbers,
 or unknown names?
@@ -465,29 +472,129 @@ use R in your field)
 
 ** data.table, an efficient package for data manipulation
 
-=data.frame= TODO
+*** Introduction to data.frame
+
+A =data.frame= is the object which represents a two dimensional data
+table (a CSV file). Like CSV files, a data.frame can have columns of
+different types. For example, let's read a small data set using the
+base R function =read.csv=:
+
+#+BEGIN_SRC R
+  families.df <- read.csv("melt_default.csv")
+  families.df
+  str(families.df)
+#+END_SRC
+
+You can think of a data.frame as a list of columns, each is a vector
+of the same size, but of different type. Say we want to perform some
+computation on all families with a mother younger than 30. First we
+need to select the =age_mother= column, which we can do using the
+double-square-bracket operator, or the dollar-sign operator (which is
+just an abbreviation for the case of selecting a column with a literal
+name).
+
+#+BEGIN_SRC R
+  families.df[["age_mother"]]
+  families.df$age_mother
+  families.df$age_mother < 30
+#+END_SRC
+
+Note that the less-than operator =<= is used to create a logical
+vector that we can use to determine if each row meets our selection
+criteria: TRUE for age less than 30, FALSE otherwise. Read =help("<")=
+for more info about this and other binary operators.
+
+*Exercise:* how could you select only the families with 3 children?
+Hint: try looking at the help pages of =is.na=, and =!=.
+
+The single-square-bracket operator works differently for data.frames
+-- it takes two arguments:
+- the first argument is used to select a subset of rows,
+- the second argument is used to select a subset of columns.
+
+Thus to select all families with a mother younger than 30, we can write
+
+#+BEGIN_SRC R
+  families.df[families.df$age_mother < 30, ]
+#+END_SRC
+
+*Exercise:* how would you select all families with three children, and
+a mother who is less than 30? Hint: read =help("&")=.
+
+Already for this very simple operation we have to repeat ourselves in
+the code (we mention the =families.df= data.frame twice in the code
+above).
+
+*** Advantages of data.table
 
 =data.table= is a package that provides an efficient alternative to R's
 native =data.frame=. How is it more efficient?
+- Faster to code. Less repetition.
+- Faster computation. Less copying objects in memory.
 
-*** Data input
+Let's perform the same operations as the previous section using
+data.table:
 
-utils::read.table and utils::read.csv are the functions provided by
-the base R system for reading data tables into R's memory. relatively
-slow and difficult to use, compared to data.table::fread.
+#+BEGIN_SRC R
+  library(data.table)
+  families.dt <- fread("melt_default.csv")
+  families.dt
+  str(families.dt)
+#+END_SRC
 
-*** Data output
+Note how the data.table displays almost the same as the data.frame in
+the output. *Exercise:* talk with your neighbor, what are the
+differences?
+
+To select the subset of families with a mother younger than 30, we can
+use variable names directly in the first argument (without a second
+reference to =families.dt=).
+
+#+BEGIN_SRC R
+  families.dt[age_mother < 30, ]
+#+END_SRC
+
+*Exercise:* how would you select all families with three children, and
+a mother who is less than 30?
+
+*Exercise:* try timing =read.csv= versus =fread= using the base
+=system.time= function, or the =microbenchmark= package. On this small
+data set, there should not be a huge difference. But on larger data
+sets (over 10MB, [[http://cbio.ensmp.fr/~thocking/data/overlap-benchmark.tgz][for example]]), there should be noticeable speed
+advantage for =fread=.
+
+#+BEGIN_SRC R
+  system.time(big.df <- read.table("overlap-benchmark/chip-seq.bedGraph"))
+  system.time(big.dt <- fread("overlap-benchmark/chip-seq.bedGraph"))
+#+END_SRC
 
 *** Converting between tall and wide data
 
-TODO: example using one of our data sets
+Work examples from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]] on the R command line.
 
-Examples taken from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]].
+*Exercise:* use =melt= and =dcast= on one of your criminology data sets.
 
-Tidy data JSS paper https://www.jstatsoft.org/article/view/v059i10
+Recommended reading: Tidy data JSS paper
+https://www.jstatsoft.org/article/view/v059i10
+
+*** DT[, second arg] for computing on columns
+
+TODO next week.
+
+*** DT[, value, by=var] for computing value conditional on var
+
+TODO next week.
+
+*** Data output to CSV
+
+Base R has =write.csv=, data.table has =fwrite= (faster).
 
 *** Summary
-
+- The data.frame object is how a CSV table is represented in base R.
+- The data.table package provides a more efficient alternative (faster
+  both in terms of coding and computation time).
+- The =melt= and =dcast= functions can be used for converting a data set
+  from long to wide format.
 
 ** Extra topics
 *** Data visualization with ggplot2
@@ -529,6 +636,9 @@ SAS, SPSS, STATA http://haven.tidyverse.org/
 
 Excel -- just save as CSV. Or use http://readxl.tidyverse.org/
 
+*** for/while/if
+
+TODO list of data.tables idiom.
 
 ** Survey
 
