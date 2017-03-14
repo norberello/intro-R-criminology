@@ -248,10 +248,53 @@ to specify the type (using one of the suffixes).
 
 *** Names and subsetting
 
-TODO
+Most R objects can have names. For example consider the following
+vector which stores the birth years of several of my family members.
+
+#+BEGIN_SRC R
+  birth.year.vec <- c(
+    Toby=1984,
+    Maude=1983,
+    Morgan=1985)
+  birth.year.vec
+  str(birth.year.vec)
+#+END_SRC
+
+You can use subset operations to look up the birth year of a person by
+name or number. The double-square-bracket operator is used to select
+exactly one element:
+
+#+BEGIN_SRC R
+  birth.year.vec[["Toby"]]
+  birth.year.vec[[1]]
+#+END_SRC
+
+*Exercise:* select one of the other elements of =birth.year.vec=,
+using either names or numbers.
+
+*Exercise:* what are some names and numbers that you think should not
+work? Why? Try them.
+
+The single-square-bracket operator is used to select any number of
+elements:
+
+#+BEGIN_SRC R
+  birth.year.vec[c("Maude", "Toby")]
+  birth.year.vec[c(1, 3)]
+  birth.year.vec[-1]
+  birth.year.vec[0]
+#+END_SRC
+
+*Exercise:* what happens when you use missing values, large numbers,
+or unknown names?
 
 *** Summary
-- R has three basic types, 
+- R has an interactive help system, =help(fun)= and =example(fun)=.
+- Most data in R are vectors which are usually one of three basic
+  types: double, integer, character.
+- Functions can be called using either positional or named arguments.
+- Most R objects can have names, which are useful in subset
+  operations.
 
 ** What are R packages? 
 
