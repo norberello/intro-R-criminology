@@ -145,12 +145,14 @@ Note that
   left, not less than minus).
 - =str= is a function that prints the *str*ucture of any R object.
 
-*Exercise:* create a vector of integers from 50 to 65, then store it
-in the variable =positive.vec=. Create another vector of integers from
--10 to -5, then store it in the variable =negative.vec=. Concatenate
-these two vectors and store the result in a new variable called
-=positive.and.negative.vec=. Use =str= on the new variables that you
-have created. What differences are there with the output of =str(x)=?
+*Exercise:* open a new R script called =exercises.R= where you write
+and execute the following R code. Create a vector of integers from 50
+to 65, then store it in the variable =positive.vec=. Create another
+vector of integers from -10 to -5, then store it in the variable
+=negative.vec=. Concatenate these two vectors and store the result in
+a new variable called =positive.and.negative.vec=. Use =str= on the
+new variables that you have created. What differences are there with
+the output of =str(x)=?
 
 *** Types in R
 
@@ -160,9 +162,10 @@ the function")=, for example =help("<-")= or =help(":")=.
 *Exercise:* read =help(":")=. The Value section describes the return
 value of the function. What is the type?
 
-There are three basic types in R: double, integer, and
-character. These types are reported by =str= (along with others we
-will discuss later).
+There are three basic types of *atomic vectors* you will most often
+use in R: double, integer, and character. These types are reported by
+=str= (along with others we will discuss later). Atomic means that
+each element of the vector has the same type.
 
 | C type | str() | R as.*       | R is.*       | literals             |
 |--------+-------+--------------+--------------+----------------------|
@@ -271,6 +274,8 @@ exactly one element:
   birth.year.vec[["Toby"]]
   birth.year.vec[[1]]
 #+END_SRC
+
+Note that the help page is =help("[[")=.
 
 *Exercise:* select one of the other elements of =birth.year.vec=,
 using a name or a number.
@@ -422,6 +427,7 @@ There are advantages and disadvantages to both approaches:
 - *Use double-colon syntax to clarify where each function comes from.*
   If you see an R script with only =install_github= (no pkg::) you may
   wonder, in which package is that defined?
+Note that both approaches will *load* the package into memory.
 
 To see a list of currently attached packages, check the search list.
 
@@ -437,6 +443,42 @@ non-exported objects). This is sometimes useful when you really want
 to see how someone else's code works, for example =cghseg:::segmeanCO=
 is an R interface to C code that solves an optimal change-point
 detection problem.
+
+*** Getting package help
+
+First of all, packages contain help pages in the same format as the
+base R system. So after you have loaded a package, you can use
+=help(fun)= and =example(fun)= to get help.
+
+*Exercise:* open the help page for the =install_github= function. Now
+close your R session with =q()= or by using the Rstudio
+interface. Open a new R session and read the help page for
+=install_github=. 
+
+*Vignettes* are not required elements of a package. When they are
+present, they are usually very useful, and probably the first place
+you should look. A vignette is a short textual description of how to
+do something in R, along with code and output. For a list of all the
+vignettes in the data.table package, do
+
+#+BEGIN_SRC R
+vignette(package="data.table")
+#+END_SRC
+
+To read one of the vignettes we will discuss later in this class, do
+
+#+BEGIN_SRC R
+  vignette("datatable-reshape", package="data.table")
+#+END_SRC
+
+Vignettes are also listed on the package's CRAN page
+http://cran.utstat.utoronto.ca/web/packages/data.table/index.html
+
+To list *all* vignettes available in your copy of R, do
+
+#+BEGIN_SRC R
+  vignette()
+#+END_SRC
 
 *** How to find packages?
 
@@ -484,6 +526,11 @@ base R function =read.csv=:
   families.df
   str(families.df)
 #+END_SRC
+
+Note that the date columns are each read as a *factor*, which is an
+integer vector with associated character *levels*. This is a type that
+R uses to represent categorical data. For more info read
+=help(factor)= and =help(levels)=.
 
 You can think of a data.frame as a list of columns, each is a vector
 of the same size, but of different type. Say we want to perform some
@@ -640,6 +687,22 @@ Excel -- just save as CSV. Or use http://readxl.tidyverse.org/
 
 TODO list of data.tables idiom.
 
-** Survey
+** For next time
+
+Thanks for participating in this first introduction to R programming
+class. Please fill out a short survey and read the following before
+the next class.
+
+*** Survey
 
 https://docs.google.com/forms/d/e/1FAIpQLSfTYlOBCPs7eYLRmgs_L5nCOvPEJcooSRlNy8DWScWwvAnEyA/viewform?usp=sf_link
+
+*** Homework / further reading
+
+Patrick Burns' [[http://www.burns-stat.com/documents/tutorials/impatient-r/][Impatient R]].
+
+#+BEGIN_SRC R
+  vignette("datatable-intro", package="data.table")
+  vignette("datatable-reshape", package="data.table")
+#+END_SRC
+
