@@ -2,17 +2,18 @@ Introduction to R programming for criminology
 
 ** Overview of topics to discuss
 
-- What is R? 30 minutes. Brief history. Why use R? Obtaining
-  R. Interfaces to R. Getting interactive help.
-- What are R packages? 30 minutes. Installing packages. Attaching
-  packages. Task views.
-- Essential packages for data analysis and visualization -- data.table
-  and ggplot2.
-- Converting between Tall=tidy=long and wide versions of the same data
-  set.
+- What is R? Brief history. Why use R? Obtaining R. Interfaces to
+  R. 
+- R basics. Getting interactive help. Vectors, types, calling
+  functions, names, subsetting.
+- What are R packages? Installing packages from CRAN and
+  GitHub. Attaching packages. How to find packages?
+- data.table, an efficient package for data manipulation.
+- Extra topics: data visualization using the ggplot2 package,
+  dates/times, regular expressions, reading/writing STATA/SPSS/SAS files in R.
 
 ** What is R? 
-
+   
 *** Brief history
 
 R is a free/open-source programming language and environment for data
@@ -83,9 +84,21 @@ R has a command line interface. So you can either (1) type R code
 interactively at the R command line, or (2) type R code into a plain
 text file (an R script) and then execute that file in R.
 
-RStudio is a graphical user interface for R (developed by the RStudio
-company, not by the R Core Team). It simplifies writing and executing
-R code. It is recommended to use RStudio for this tutorial.
+RStudio is a graphical user interface for R (developed by the
+RStudio company, not by the R Core Team). It simplifies writing and
+executing R code. It is recommended to use RStudio for this tutorial.
+
+*** Summary
+
+- The base R system is free/open-source software developed since 1993
+  by R-core, a team of statisticians and programmers.
+- There are many reasons to use R (free, popular, state-of-the-art).
+- R and its source code can be obtained free of charge from CRAN, the
+  Comprehensive R Archive Network.
+- R is inherently a command line program, but there are several
+  graphical user interfaces, including RStudio.
+
+** R basics
 
 *** Getting interactive help
 
@@ -95,7 +108,7 @@ in RStudio. Execute the following line of code to see an example of
 how to compute the sample mean using the =mean= function.
 
 #+BEGIN_SRC R
-example(mean)
+  example(mean)
 #+END_SRC
 
 Note: we say that we are calling the function =example= with the
@@ -104,13 +117,17 @@ argument =mean=.
 *** R is a vectorized language
 
 We say that R is a vectorized language because most data in R is a
-*vector* (with N > 1 elements). For example the variable =x <- c(0:10, 50)=
-is a numeric vector of length 12.
+*vector* (with N > 1 elements), as opposed to a *scalar* (with 1
+element). For example the variable =x <- c(0:10, 50)= is a numeric
+vector of length 12. The =mean= function takes a vector argument like
+=x= and returns its mean as a scalar.
 
 #+BEGIN_SRC R
   x <- c(0:10, 50)
   x
   str(x)
+  xm <- mean(x)
+  str(xm)
 #+END_SRC
 
 Note that 
@@ -126,28 +143,115 @@ Note that
 - =str= is a function that prints the *str*ucture of any R object.
 
 *Exercise:* create a vector of integers from 50 to 65, then store it
-in the variable =positive.vec=. Create another vectors of integers
-from -10 to -5, then store it in the variable
-=negative.vec=. Concatenate these two vectors and store the result in
-a new variable called =positive.and.negative.vec=. Use =str= on the
-new variables that you have created. What differences are there with
-the output of =str(x)=?
+in the variable =positive.vec=. Create another vector of integers from
+-10 to -5, then store it in the variable =negative.vec=. Concatenate
+these two vectors and store the result in a new variable called
+=positive.and.negative.vec=. Use =str= on the new variables that you
+have created. What differences are there with the output of =str(x)=?
+
+*** Types in R
 
 Note: you can get help about any function in R using =help("name of
 the function")=, for example =help("<-")= or =help(":")=.
 
-*Exercise:* what is the difference between =library= and ="library"=?
-=library= is a function and ="library"= is a character string. To see
-a brief description of any R object, use the =str= function:
+*Exercise:* read =help(":")=. The Value section describes the return
+value of the function. What is the type?
+
+There are three basic types in R: double, integer, and
+character. These types are reported by =str= (along with others we
+will discuss later).
+
+| C type | str() | R as.*       | R is.*       | literals             |
+|--------+-------+--------------+--------------+----------------------|
+| double | num   | as.double    | is.double    | 0, 1e-5, Inf, 2e-308 |
+| int    | int   | as.integer   | is.integer   | 0L, 50L, -6L         |
+| char*  | chr   | as.character | is.character | "0" or '0' or "zero" |
+
+- Literals are what you write in R code to express a certain
+  value. The e is short for exponent (times 10^), Inf is short for
+  infinity, and L is short for long integer.
+- Note that =num= is short for "numeric" and =double= is short for
+  "double precision floating point" (real number possibly with
+  decimal).
+
+*Exercise:* Use =str= to find out the types of the following R
+ expressions. What can you conclude about the rules that =c= uses to
+ concatenate values of different types?
 
 #+BEGIN_SRC R
-  str(library)
-  str("library")
+  0:10
+  50
+  "15"
+  c(0:10, 50, "15")
 #+END_SRC
 
-So when we use call the =mean= function with  This constrasts
-other languages like C where computations must be expressed in terms
-of *scalars* (variables each with 1 element).
+*Exercise:* use the as.* functions to convert between types. Can you
+predict the output?
+
+#+BEGIN_SRC R
+  ## what happens when you convert double to int or character?
+  x <- c(0:10, 50)
+  as.integer(x)
+  as.character(x)
+  ## what happens when you convert character to int or double?
+  chr.vec <- c("0", "-5.5", "2", "Inf", "Male", "Female")
+  as.integer(chr.vec)
+  as.double(chr.vec)
+#+END_SRC
+
+*** Calling functions with positional versus named arguments
+
+There are two ways to specify arguments to functions in R. So far we
+have mostly seen *positional arguments*, fun(value1, value2). In the
+code below, we say that =0:10= is the first argument of =c= and =50=
+is the second argument (separated by commas).
+
+#+BEGIN_SRC R
+  num.vec <- c(0:10, 50)
+  mean(num.vec)
+#+END_SRC
+
+But we can also use *named arguments*, fun(name1=value1,
+name2=value2), which are also separated by commas. Note that
+- named arguments can appear in any order (not necessarily the same
+  order as on the help page).
+- if you don't specify an argument at all (for example na.rm on the
+  first line below), then it takes its default value (as specified on
+  the function's help page).
+
+#+BEGIN_SRC R
+  mean(x=num.vec)
+  mean(x=num.vec, na.rm=TRUE)
+  mean(na.rm=TRUE, x=num.vec) 
+#+END_SRC
+
+You can also mix positional with named arguments. 
+
+#+BEGIN_SRC R
+  na.vec <- c(NA, num.vec)
+  mean(na.vec)
+  mean(na.vec, na.rm=TRUE)
+#+END_SRC
+
+By the way, =NA= is short for "none associated" -- a missing
+value. And "rm" is short for "remove" so =na.rm= is short for "remove
+missing" values.
+
+*Exercise:* type =NA= and then TAB at the R command line -- you should
+see a list of R objects that begin with NA. Use =str= to find out the
+types of each (yes, there are different types of missing
+values). Usually you can just use =NA= (without any suffix) in your R
+code to indicate a missing value, but sometimes it will be necessary
+to specify the type (using one of the suffixes).
+
+*Exercise:* what happens when you use =c= with named arguments?
+
+*** Names and subsetting
+
+TODO
+
+*** Summary
+- R has three basic types, 
 
 ** What are R packages? 
 
@@ -212,8 +316,9 @@ normalizePath("~")
 
 *** install_github packages to your computer
 
-Some new versions of CRAN packages can be downloaded from GitHub. For
-example a newer version of data.table is available from
+Some new versions of CRAN packages can be downloaded from GitHub, a
+web site that provides free code hosting for free/open-source
+projects. For example a newer version of data.table is available from
 https://github.com/Rdatatable/data.table and installable via the R
 commands
 
@@ -227,10 +332,11 @@ means that both the =remotes= and the =devtools= packages contain a
 function called =install_github=. Both should work for installing
 packages from GitHub.
 
-*Exercise:* install the =namedCapture= package from one of my github
-repositories, https://github.com/tdhock/namedCapture. Hint: you will
-first need to use =install.packages= to get a copy of either =remotes=
-or =devtools=.
+*Exercise:* install the =namedCapture= package for named capture
+regular expressions from one of my github repositories,
+https://github.com/tdhock/namedCapture. Hint: you will first need to
+use =install.packages= to get a copy of either =remotes= or
+=devtools=.
 
 Caveat: some R packages contain compiled code. Packages with compiled
 code are compiled to binary form for you on CRAN, but not on
@@ -239,21 +345,111 @@ your computer will need a compiler.
 - Windows Rtools http://cran.r-project.org/bin/windows/Rtools/
 - Mac Xcode https://developer.apple.com/downloads
 - Linux usually has compilation tools by default, but you may need to
-  install a package called =r-devel= or =r-base-dev=.
+  run a command like =sudo aptitude install r-base-dev=.
 
-*** How to find other packages?
+*** Attaching packages
+
+There are two ways of accessing functions and data in a package. For
+example consider the =install_github= function in the =remotes=
+package. You can either use that function via
+
+#+BEGIN_SRC R
+remotes::install_github("Rdatatable/data.table")
+#+END_SRC
+
+which does NOT attach the package. Otherwise you can attach the
+package with =library=, which gives you access to all its exported
+functions without having to use the =remotes::= prefix.
+
+#+BEGIN_SRC R
+library(remotes)
+install_github("Rdatatable/data.table")
+#+END_SRC
+
+There are advantages and disadvantages to both approaches:
+- *Attach using library for convenient interactive use* when a package
+  is attached, its contents are available for TAB-completion.
+- *Use double-colon syntax to clarify where each function comes from.*
+  If you see an R script with only =install_github= (no pkg::) you may
+  wonder, in which package is that defined?
+
+To see a list of currently attached packages, check the search list.
+
+#+BEGIN_SRC R
+  search()
+#+END_SRC
+
+Note: there is also the triple-colon syntax =pkg:::object= which can
+be used to access non-exported objects in a package that are supposed
+to be hidden from the user. However, since R is free/open-source
+software, the source code for everything is available (even
+non-exported objects). This is sometimes useful when you really want
+to see how someone else's code works, for example =cghseg:::segmeanCO=
+is an R interface to C code that solves an optimal change-point
+detection problem.
+
+*** How to find packages?
 
 - [[https://cran.r-project.org/web/views/][Task views]] are topic-based lists of packages.
 - There are various local ([[http://www.meetup.com/Montreal-R-User-Group/][Montreal R User Group]], [[http://raquebec.ulaval.ca/2017/][R à QC]]) and
   international meetings ([[https://user2017.brussels/][useR2017 in Brussels]]).
 - Community news sites: [[https://www.r-bloggers.com/][R-Bloggers]], [[https://rweekly.org/][RWeekly]].
 
+*Exercise:* it seems to me like network analysis and visualization is
+an important topic in criminology. go to the Task Views web page, and
+try to find an R package for network visualization. Hint: in
+statistics we refer to data visualization as statistical graphics.
+
+*Get involved with the R community.* There is not yet an R task view
+for criminology. R is an open project, so you could be the first to
+create one! All you need is some time to review the existing packages,
+and to write some brief summary of how the relevant ones are useful
+for criminology. (you can also ask for contributions from others who
+use R in your field)
+
 *** Section summary
 
-- =library=
-- install.packages downloads packages from CRAN-like 
+- An R package contains code and data for a specific field of data
+  analysis.
+- =install.packages= downloads the most recent version of a package
+  from CRAN, and installs it on your computer.
+- =install_github= downloads a package from GitHub, and installs in on
+  your computer.
+- Packages can be used either via double-colon syntax or via
+  =library=.
+- There are a variety of resources online and in real life to help you
+  find packages for particular problems.
 
-** Reading date and times into R
+** data.table, an efficient package for data manipulation
+
+=data.frame= TODO
+
+=data.table= is a package that provides an efficient alternative to R's
+native =data.frame=. How is it more efficient?
+
+*** Data input
+
+utils::read.table and utils::read.csv are the functions provided by
+the base R system for reading data tables into R's memory. relatively
+slow and difficult to use, compared to data.table::fread.
+
+*** Data output
+
+*** Converting between tall and wide data
+
+TODO: example using one of our data sets
+
+Examples taken from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]].
+
+Tidy data JSS paper https://www.jstatsoft.org/article/view/v059i10
+
+*** Summary
+
+
+** Extra topics
+*** Data visualization with ggplot2
+http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html
+*** Reading date and times into R
 
 =fread= converts a date/time column in a CSV file to a character
 vector columns of a =data.table=. The =strptime= function can be used
@@ -279,29 +475,18 @@ numeric dates.
 *Packages* that attempt to simplify reading of dates and times are
 [[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
 
-** Named capture regular expressions
+*** Named capture regular expressions
 
 https://github.com/tdhock/regex-tutorial
 
-** Data input, subsetting, and output
 
-utils::read.table and utils::read.csv are the functions provided by
-the base R system for reading data tables into R's memory. relatively
-slow and difficult to use, compared to data.table::fread.
-
-** Reading and writing files from other programs in R
+*** Reading and writing files from other programs in R
 
 SAS, SPSS, STATA http://haven.tidyverse.org/
 
 Excel -- just save as CSV. Or use http://readxl.tidyverse.org/
 
-** Converting between tall and wide data
 
-TODO: example using one of our data sets
+** Survey
 
-Examples taken from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]].
-
-Tidy data JSS paper https://www.jstatsoft.org/article/view/v059i10
-
-** Other example using criminology data.
-
+https://docs.google.com/forms/d/e/1FAIpQLSfTYlOBCPs7eYLRmgs_L5nCOvPEJcooSRlNy8DWScWwvAnEyA/viewform?usp=sf_link
