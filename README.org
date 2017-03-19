@@ -4,11 +4,11 @@ DOWNLOAD LINK: https://github.com/tdhock/intro-R-criminology/archive/master.zip
 
 ** Overview of topics to discuss
 
-- What is R? Brief history. Why use R? Obtaining R. Interfaces to
-  R. 
-- R basics. Getting interactive help. Vectors, types, calling
-  functions, names, subsetting.
-- What are R packages? Installing packages from CRAN and
+- What is R? 20 minutes. Brief history. Why use R? Obtaining
+  R. Interfaces to R.
+- R basics. 60 minutes. Getting interactive help. Vectors, types,
+  calling functions, names, subsetting.
+- What are R packages? 60 minutes. Installing packages from CRAN and
   GitHub. Attaching packages. How to find packages?
 - data.table, an efficient package for data manipulation.
 - Extra topics: data visualization using the ggplot2 package,
@@ -36,7 +36,7 @@ to use other statistical software (SPSS, SAS, STATA), and you want to
 learn R, try reading [[http://www.burns-stat.com/documents/tutorials/r-relative-to-statistical-packages/][R Relative to Statistical Packages]] and the links
 therein. The final quote by Jonathan Baron is
 
-#+BEGIN_SRC 
+#+BEGIN_SRC text
 Another point, which I repeatedly make to students, is that R is free
 and will continue to exist. Nothing can make it go away. Once you
 learn it, you are no longer subject to price increases (e.g., from
@@ -654,7 +654,7 @@ to convert most date/time strings to numeric format.
 
 Criminology data example [[file:transactions.txt]]
 
-#+BEGIN_SRC 
+#+BEGIN_SRC text
 seller buyer date
 567    577   2007-10-30
 225    567   2007-11-15
