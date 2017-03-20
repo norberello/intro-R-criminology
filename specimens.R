@@ -2,84 +2,113 @@ works_with_R(
   "3.3.3",
   microbenchmark="1.4.2",
   "tdhock/namedCapture@1da425bb24a2ff1edc89d38654b5c9465aa9fa20")
-specimens <- fread("SFC1018-HIV2017-Datastup_R.CSV")
+specimens <- fread("specimens.csv")
 nrow(specimens)
 length(unique(specimens$SPECIMEN))
-specimens[, table(CANTON)]
+specimens[, table(SERVPOL, useNA="always")]
 specimens[, table(Type)]
+specimens[, table(STUP)]
+specimens[, table(STUP, Type)]
+
+ggplot()+
+  geom_point(aes(SERVPOL, masse_coca), data=specimens)
+
+ggplot()+
+  geom_point(aes(SERVPOL, masse_coca), data=specimens)+
+  scale_y_log10()
+
+## Exercise: plot some other masse_ variables using geom_point.
+
+ggplot()+
+  geom_point(aes(masse_hero, masse_coca), data=specimens)+
+  scale_y_log10()+
+  scale_x_log10()+
+  coord_equal()
+
+ggplot()+
+  geom_abline(slope=1,intercept=0,color="grey")+
+  geom_point(aes(masse_specimen, masse_coca, color=SERVPOL), data=specimens)+
+  scale_y_log10()+
+  scale_x_log10()+
+  coord_equal()
+
+ggplot()+
+  geom_point(aes(SERVPOL, masse_hero), data=specimens)+
+  scale_y_log10()
+
+mass.col.vec <- grep("masse_", names(specimens), value=TRUE)
+mass.tall <- melt(
+  specimens,
+  measure.vars=mass.col.vec,
+  id.vars=c("SPECIMEN", "SERVPOL"),
+  variable.name="masse_type",
+  value.name="mass")
+mass.tall[, type := sub("masse_", "", masse_type)]
+
+ggplot()+
+  geom_point(aes(SERVPOL, mass, color=type), data=mass.tall)+
+  scale_y_log10()
+
+ggplot()+
+  facet_grid(. ~ type)+
+  geom_point(aes(SERVPOL, mass), data=mass.tall)+
+  scale_y_log10()
+
+ggplot()+
+  facet_grid(type ~ .)+
+  geom_point(aes(SERVPOL, mass), data=mass.tall)+
+  scale_y_log10()
+
 specimens.name.vec <- names(specimens)
 class.col <- which(specimens.name.vec=="CLASSE")
 is.after.class <- class.col < 1:length(specimens.name.vec)
 coupage.name.vec <- specimens.name.vec[is.after.class]
-microbenchmark(melt={
-  specimens.tall <- melt(
-    specimens,
-    measure.vars=coupage.name.vec,
-    id.vars=c("SPECIMEN", "CANTON"),
-    variable.name="coupage",
-    value.name="presence")
-  specimens.one <- specimens.tall[presence==1,]
-}, by={
-  specimens.by <- specimens[, list(
-    coupage=strsplit(COUPAGE, " ", fixed=TRUE)[[1]]
-  ), by=list(SPECIMEN, CANTON)]
-}, strsplit={
-  specimens.strsplit <- specimens[, {
-    list.of.coupage.vectors <- strsplit(COUPAGE, " ", fixed=TRUE)
-    n.coupage.vec <- sapply(list.of.coupage.vectors, length)
-    data.table(
-      SPECIMEN=rep(SPECIMEN, n.coupage.vec),
-      CANTON=rep(CANTON, n.coupage.vec),
-      coupage=unlist(list.of.coupage.vectors))
-  }]
-}, times=10)
-specimens.by[specimens.one, on=list(SPECIMEN, CANTON, coupage)]
-specimens.one[specimens.by, on=list(SPECIMEN, CANTON, coupage)][is.na(presence),]
-
-coupage.counts <- specimens.one[, list(specimens=.N), by=list(CANTON, coupage)]
+coupage.tall <- melt(
+  specimens,
+  measure.vars=coupage.name.vec,
+  id.vars=c("SPECIMEN", "SERVPOL"),
+  variable.name="coupage",
+  value.name="presence")
+coupage.present <- coupage.tall[presence==1,]
+coupage.counts <- specimens.present[, list(
+  specimens=.N
+), by=list(SERVPOL, coupage)]
 ggplot()+
-  geom_tile(aes(CANTON, coupage, fill=log10(specimens)), data=coupage.counts)+
+  geom_tile(aes(SERVPOL, coupage, fill=log10(specimens)), data=coupage.counts)+
   scale_fill_gradient(low="grey95", high="red")
 
-canton.counts <- coupage.counts[, list(cantons=.N), by=coupage]
-coupage.levels <- canton.counts[order(cantons), coupage]
+servpol.counts <- coupage.counts[, list(servpols=.N), by=coupage]
+coupage.levels <- servpol.counts[order(servpols), coupage]
 coupage.counts[, coupage.fac := factor(coupage, coupage.levels)]
 ggplot()+
-  geom_tile(aes(CANTON, coupage.fac, fill=log10(specimens)),
+  geom_tile(aes(SERVPOL, coupage.fac, fill=log10(specimens)),
             data=coupage.counts)+
   scale_fill_gradient(low="grey95", high="red")+
-  geom_text(aes(CANTON, coupage.fac, label=specimens),
+  geom_text(aes(SERVPOL, coupage.fac, label=specimens),
             data=coupage.counts)
 
-coupage.counts[, proportion := specimens/sum(specimens), by=CANTON]
-ggplot()+
-  geom_tile(aes(CANTON, coupage, fill=proportion), data=coupage.counts)+
-  scale_fill_gradient(low="grey95", high="red")
+## Exercise: how could you sort the rows by 
 
-ggplot()+
-  geom_point(aes(PURETE, masse_ech, color=Type), data=specimens)
-ggplot()+
-  geom_point(aes(log10(masse_specimen), log10(masse_ech), color=EMBALLAGE), data=specimens)
-specimens[, table(DESCRIPTION)]
-specimens.desc <- specimens[, list(rows=.N), by=DESCRIPTION]
-specimens.desc[order(rows),][rows>1,]
-specimens.emb <- specimens[, list(rows=.N), by=EMBALLAGE]
-specimens.emb[order(rows),][rows>1,]
+## SPECIMEN = NNN_MM.AA_M_ où NNN_MM.AA = SAISIE (mise sous séquestre
+## globale par un service de police), M = Spécimen M extrait de cette
+## saisie ; MM = Mois ; AA = Année
 saisie.pattern <- paste0(
   "(?<id>[0-9]+)",
   "_",
-  "(?<mois>[0-9]+)",
+  "(?<month>[0-9]+)",
   "[.]",
-  "(?<jour>[0-9]+)")
+  "(?<year>[0-9]+)")
 specimen.types <- list(
   id=as.integer,
-  mois=as.integer,
-  jour=as.integer,
+  month=as.integer,
+  year=as.integer,
   specimen=as.integer)
 saisie.df <- str_match_named(specimens$SAISIE, saisie.pattern, specimen.types)
 stopifnot(sum(is.na(saisie.df))==0)
+
 saisie.dt <- data.table(saisie.df)
-saisie.dt[, table(jour, mois)]
+saisie.dt[, table(year, month)]
+
 specimen.pattern <- paste0(
   "(?<saisie>",
   saisie.pattern,
@@ -87,7 +116,9 @@ specimen.pattern <- paste0(
   "_",
   "(?<specimen>[0-9]+)",
   "_")
-specimen.df <- str_match_named(specimens$SPECIMEN, specimen.pattern, specimen.types)
+specimen.df <- str_match_named(
+  specimens$SPECIMEN, specimen.pattern, specimen.types)
 stopifnot(sum(is.na(specimen.df))==0)
 specimen.dt <- data.table(specimen.df)
 stopifnot(specimen.dt$saisie == specimens$SAISIE)
+specimen.dt

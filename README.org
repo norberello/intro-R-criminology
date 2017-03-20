@@ -519,10 +519,40 @@ use R in your field)
 A =data.frame= is the object which represents a two dimensional data
 table (a CSV file). Like CSV files, a data.frame can have columns of
 different types. For example, let's read a small data set using the
-base R function =read.csv=:
+base R function =read.csv=. Begin by downloading [[https://raw.githubusercontent.com/tdhock/intro-R-criminology/master/melt_default.csv][melt_default.csv]] to
+your computer, and take note where you save it -- you will need to
+tell R where to look for it. Use =getwd()= to get the "working
+directory" and use =setwd("/path/to/a/directory")= to set it. R
+functions that operate on files are always relative to the working
+directory.
+
+Example 1 (Linux or Mac): you saved the file to
+=~/Downloads/melt_default.csv= (tilde =~= means your home
+directory). Then you could read it via either
 
 #+BEGIN_SRC R
+  setwd("~/Downloads")
   families.df <- read.csv("melt_default.csv")
+#+END_SRC
+
+or
+
+#+BEGIN_SRC R
+  families.df <- read.csv("~/Downloads/melt_default.csv")
+#+END_SRC
+
+Example 2 (Windows): for each data analysis project, I save all data
+files and R scripts in the same directory. If you save the CSV file to
+=C:\projects\intro-R-criminology= then you could do
+
+#+BEGIN_SRC R
+  setwd("C:\projects\intro-R-criminology")
+  read.csv("melt_default.csv")
+#+END_SRC
+
+Once you have read the CSV file, you can display it in R via
+
+#+BEGIN_SRC R
   families.df
   str(families.df)
 #+END_SRC
@@ -579,8 +609,9 @@ native =data.frame=. How is it more efficient?
 - Faster to code. Less repetition.
 - Faster computation. Less copying objects in memory.
 
-Let's perform the same operations as the previous section using
-data.table:
+Let's perform the same operations as the previous section using the
+=data.table= package, which contains the =fread= function for reading
+CSV files.
 
 #+BEGIN_SRC R
   library(data.table)
@@ -604,6 +635,9 @@ reference to =families.dt=).
 *Exercise:* how would you select all families with three children, and
 a mother who is less than 30?
 
+For more information about selecting subsets, read
+=help("[.data.table")= (especially the examples section).
+
 *Exercise:* try timing =read.csv= versus =fread= using the base
 =system.time= function, or the =microbenchmark= package. On this small
 data set, there should not be a huge difference. But on larger data
@@ -615,22 +649,174 @@ advantage for =fread=.
   system.time(big.dt <- fread("overlap-benchmark/chip-seq.bedGraph"))
 #+END_SRC
 
-*** Converting between tall and wide data
+*** Converting between long and wide data (melt and dcast)
 
 Work examples from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]] on the R command line.
+
+- Tall data is a synonym for long data in English (mais le mot
+  «grande» en français est ambigu : les grandes données peuvent être
+  soit larges, soit longues).
+- =melt= converts from wide to long (fondre en français). The "melt"
+  comes from metallurgy, to create a long "molten" =data.frame= which
+  can then be cast into other formats.
+- =dcast= converts from long to wide. The word "cast" is used in the
+  sense of metallurgy (casting is a process in which a liquid molten
+  metal is left to solidify and take the shape of a mold). The "d"
+  prefix is for =data.frame= output, to contrast other types of output
+  like arrays (=reshape2::acast=). En français on dit «coulage» pour
+  la méthode de mise en forme d'un métal liquide, laissé refroidir
+  dans une moule pour se solidifier. (verbe couler?)
+
+#+BEGIN_SRC R
+  children <- melt(
+    families.dt,
+    measure.vars=c("dob_child1", "dob_child2", "dob_child3"),
+    id.vars=c("family_id", "age_mother"),
+    variable.name="child",
+    value.name="dob")
+  dcast(children, family_id + age_mother ~ child)
+#+END_SRC
+
+*Exercise:* all of the arguments to =melt= are optional (besides the
+first). What happens if you do not specify some of them?
+
+*Exercise:* what happens if you remove the missing (NA) rows and then
+do the dcast again?
+
+*Exercise:* what happens if you remove all of the third children
+(dob_child3) and then do the dcast again?
+
+*** DT[, values] for computing on columns
+
+If an R expression is provided as the second argument to the
+data.table square-bracket operator, then it will be evaluated using
+the variables in that data.table:
+
+#+BEGIN_SRC R
+  children[, age_mother]
+  children[, age_mother - 20]
+#+END_SRC
+
+A new data.table will be returned if you use =list=, =.=, or =data.table=
+in the second argument (they all give the same result).
+
+#+BEGIN_SRC R
+  children[, list(age_mother)]
+  children[, .(age_mother)]
+  only.age <- children[, data.table(age_mother)]
+  family.and.age <- children[, list(
+    family=family_id,
+    age=age_mother)] # rename columns.
+#+END_SRC
+
+Create/update a column using the colon-equals operator. Below, we use
+=sub= to replace ="dob_child"= with the empty string =""=.
+
+#+BEGIN_SRC R
+  children[, child_order := sub("dob_child", "", child)]
+  children
+#+END_SRC
+
+*Exercise:* what type is the new column =child_order=? How could you
+convert it to an integer type?
+
+*** Reading date and times into R
+
+How could we compute the current age of each child? First we need to
+convert their birthdates from character to numeric format.
+
+=fread= converts a date/time column in a CSV file to a character
+vector column of a =data.table=. The =strptime= function can be used
+to convert most date/time strings to numeric format. For example let's
+convert the =dob= variable from character to =POSIXct=:
+
+#+BEGIN_SRC R
+  children[, dob.POSIXct := strptime(dob, "%Y-%m-%d")]
+  str(children)
+#+END_SRC
+
+Note that R has two date/time types, =POSIXct= (c is short for
+"calendar time," the number of seconds since the beginning of
+1970) and =POSIXlt= (l is short for "local time," a more
+human-readable vector of seconds, minutes, etc). For more info read
+=help("POSIXlt")=. The =strptime= function returns =POSIXlt= but
+data.table converts it to the more efficient =POSIXct= type (with a
+warning).
+
+*Exercise:* the =Sys.time()= function gives the current time. Use
+subtraction to compute the age of each child in days, and store that
+in a new column =age_child_days=. What is the type of that column?
+(use both =str= and =typeof=) Divide by 365 to get the approximate age
+in years, and store that in a new column
+=age_child_years_num=. Subtract from =age_mother= to get a new column
+=age_diff= -- what is the smallest value of =age_diff=? What does this
+tell you about storing ages rather than dates?
+
+#+BEGIN_SRC R
+  children[order(age_mother), list(age_mother, age_child_years_num, age_diff)]
+#+END_SRC
+
+What if we wanted to compute the age in years that we say in response
+to the question, "how old are you?" That is more complicated, because
+the number of days per year is not constant (usually 365 days per
+year, but 366 days in each leap year). We can do that by using
+subtraction on the years, and then comparing the current and birth
+month/day. Begin by using =strftime= to compute the current year,
+month, and day:
+
+#+BEGIN_SRC R
+  cur.time <- Sys.time()
+  cur.year.chr <- strftime(cur.time, "%Y")
+  cur.month.chr <- strftime(cur.time, "%m")
+  cur.day.chr <- strftime(cur.time, "%d")
+#+END_SRC
+
+Note that strftime returns character, and can be used to format dates
+and times however you like. *Exercise:* read the Details section of
+=help("strftime")= and use it get the current date in "17 mars 2017"
+format.
+
+Now we compute the current year/month/day in integer format:
+
+#+BEGIN_SRC R
+  cur.year <- as.integer(cur.year.chr)
+  cur.month <- as.integer(cur.month.chr)
+  cur.day <- as.integer(cur.day.chr)
+#+END_SRC
+
+*Exercise:* compute the birth year, month, and day as new integer
+columns (=dob.year=, =dob.month=, =dob.day=) of =children=.
+
+The code below first computes the =had.bday= column with is =TRUE= if
+the child had its birthday already this year. Then we compute
+=age_child_years_int= which is the common answer to the question "how
+old are you?"
+
+#+BEGIN_SRC R
+  children[, had.bday := ifelse(
+    dob.month < cur.month, TRUE, ifelse(
+      dob.month==cur.month, dob.day <= cur.day, FALSE))]
+  children[, age_child_years_int := cur.year - dob.year - ifelse(had.bday, 0, 1)]
+  children[order(age_mother), list(
+    age_mother, age_child_years_num, age_child_years_int)]
+#+END_SRC
+
+Exception: one data set when strptime did not work for me is
+https://github.com/tdhock/montreal-velos/blob/master/velos.R -- I had
+to use a character vector to convert non-standard month names to
+numeric dates.
+
+Packages that attempt to simplify reading of dates and times are
+[[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
+
+*** DT[, values, by=var] for computing value conditional on var
+
+TODO next week.
 
 *Exercise:* use =melt= and =dcast= on one of your criminology data sets.
 
 Recommended reading: Tidy data JSS paper
 https://www.jstatsoft.org/article/view/v059i10
-
-*** DT[, second arg] for computing on columns
-
-TODO next week.
-
-*** DT[, value, by=var] for computing value conditional on var
-
-TODO next week.
 
 *** Data output to CSV
 
@@ -646,32 +832,6 @@ Base R has =write.csv=, data.table has =fwrite= (faster).
 ** Extra topics
 *** Data visualization with ggplot2
 http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html
-*** Reading date and times into R
-
-=fread= converts a date/time column in a CSV file to a character
-vector columns of a =data.table=. The =strptime= function can be used
-to convert most date/time strings to numeric format. 
-
-Criminology data example [[file:transactions.txt]]
-
-#+BEGIN_SRC text
-seller buyer date
-567    577   2007-10-30
-225    567   2007-11-15
-1019   1190  2007-11-19
-2      983   2007-11-26
-2      983   2007-11-27
-567    1257  2007-11-28
-#+END_SRC
-
-one data set when strptime did not work for me is
-https://github.com/tdhock/montreal-velos/blob/master/velos.R -- I had
-to use a character vector to convert non-standard month names to
-numeric dates.
-
-*Packages* that attempt to simplify reading of dates and times are
-[[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
-
 *** Named capture regular expressions
 
 https://github.com/tdhock/regex-tutorial
