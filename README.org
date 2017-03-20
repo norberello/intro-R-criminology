@@ -686,6 +686,9 @@ do the dcast again?
 *Exercise:* what happens if you remove all of the third children
 (dob_child3) and then do the dcast again?
 
+Recommended reading: Tidy data JSS paper
+https://www.jstatsoft.org/article/view/v059i10
+
 *** DT[, values] for computing on columns
 
 If an R expression is provided as the second argument to the
@@ -709,8 +712,20 @@ in the second argument (they all give the same result).
     age=age_mother)] # rename columns.
 #+END_SRC
 
-Create/update a column using the colon-equals operator. Below, we use
-=sub= to replace ="dob_child"= with the empty string =""=.
+Create/update a column using the colon-equals := operator, which is
+the assignment operator for columns of a data.table (like left-arrow
+<- for creating R variables). Syntax is the same as left-arrow (name
+<- value, name := value). There are two main differences:
+- *Context:* colon-equals := can be only used in the second argument
+  of a data.table, but left-arrow <- can be used anywhere outside a
+  data.table.
+- *Efficiency:* left-arrow <- always makes copies of memory (RAM),
+  which can be problematic for large data sets. Colon-equals will
+  allocate memory for a new column, but will not copy any memory when
+  updating a column.
+Below, we use =sub= to replace ="dob_child"= with the empty string
+=""=. 
+Syntax is =sub(find, replace, subject)=, for more info read =help("sub")=.
 
 #+BEGIN_SRC R
   children[, child_order := sub("dob_child", "", child)]
@@ -743,14 +758,15 @@ human-readable vector of seconds, minutes, etc). For more info read
 data.table converts it to the more efficient =POSIXct= type (with a
 warning).
 
-*Exercise:* the =Sys.time()= function gives the current time. Use
-subtraction to compute the age of each child in days, and store that
-in a new column =age_child_days=. What is the type of that column?
-(use both =str= and =typeof=) Divide by 365 to get the approximate age
-in years, and store that in a new column
-=age_child_years_num=. Subtract from =age_mother= to get a new column
-=age_diff= -- what is the smallest value of =age_diff=? What does this
-tell you about storing ages rather than dates?
+*Exercise:* the =Sys.time()= function gives the current time. 
+- Use subtraction to compute the age of each child in days, and store
+  that in a new column =age_child_days=. What is the type of that column?
+  (use both =str= and =typeof=) 
+- Divide by 365 to get the approximate age in years, and store that in
+  a new column =age_child_years_num=. 
+- Subtract from =age_mother= to get a new column =age_diff= -- what is
+  the smallest value of =age_diff=? What does this tell you about
+  storing ages rather than dates?
 
 #+BEGIN_SRC R
   children[order(age_mother), list(age_mother, age_child_years_num, age_diff)]
@@ -813,11 +829,6 @@ Packages that attempt to simplify reading of dates and times are
 
 TODO next week.
 
-*Exercise:* use =melt= and =dcast= on one of your criminology data sets.
-
-Recommended reading: Tidy data JSS paper
-https://www.jstatsoft.org/article/view/v059i10
-
 *** Data output to CSV
 
 Base R has =write.csv=, data.table has =fwrite= (faster).
@@ -828,6 +839,10 @@ Base R has =write.csv=, data.table has =fwrite= (faster).
   both in terms of coding and computation time).
 - The =melt= and =dcast= functions can be used for converting a data set
   from long to wide format.
+- =dt[, value]= returns a vector and =dt[, data.table(value1,
+  value2)]= returns a =data.table=.
+- dt[, colName := value] creates or updates a column.
+- TODO
 
 ** Extra topics
 *** Data visualization with ggplot2
