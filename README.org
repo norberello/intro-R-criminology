@@ -4,15 +4,16 @@ DOWNLOAD LINK: https://github.com/tdhock/intro-R-criminology/archive/master.zip
 
 ** Overview of topics to discuss
 
-- What is R? 20 minutes. Brief history. Why use R? Obtaining
+- [[#what-is-r][What is R]]? 20 minutes. Brief history. Why use R? Obtaining
   R. Interfaces to R.
-- R basics. 60 minutes. Getting interactive help. Vectors, types,
+- [[#r-basics][R basics]]. 60 minutes. Getting interactive help. Vectors, types,
   calling functions, names, subsetting.
-- What are R packages? 60 minutes. Installing packages from CRAN and
+- [[#what-are-r-packages][What are R packages]]? 60 minutes. Installing packages from CRAN and
   GitHub. Attaching packages. How to find packages?
-- data.table, an efficient package for data manipulation.
-- Extra topics: data visualization using the ggplot2 package,
-  dates/times, regular expressions, reading/writing STATA/SPSS/SAS
+- [[#datatable-an-efficient-package-for-data-manipulation][data.table]], an efficient package for data manipulation.
+- [[#criminology-data-visualization-with-ggplot2][ggplot2]], a package for data visualization based on the grammar of
+  graphics.
+- [[#extra-topics][Extra topics]]: regular expressions, reading/writing STATA/SPSS/SAS
   files in R, for/while/if.
 
 ** What is R? 
