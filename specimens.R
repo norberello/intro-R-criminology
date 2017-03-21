@@ -6,15 +6,19 @@ specimens <- fread("specimens.csv")
 nrow(specimens)
 length(unique(specimens$SPECIMEN))
 specimens[, table(SERVPOL, useNA="always")]
+specimens[, SERVPOL.fac := factor(SERVPOL, 1:10)]
 specimens[, table(Type)]
 specimens[, table(STUP)]
 specimens[, table(STUP, Type)]
 
 ggplot()+
+  geom_point(aes(SERVPOL.fac, masse_coca), data=specimens)
+
+ggplot()+
   geom_point(aes(SERVPOL, masse_coca), data=specimens)
 
 ggplot()+
-  geom_point(aes(SERVPOL, masse_coca), data=specimens)+
+  geom_point(aes(SERVPOL.fac, masse_coca), data=specimens)+
   scale_y_log10()
 
 ## Exercise: plot some other masse_ variables using geom_point.
@@ -27,32 +31,65 @@ ggplot()+
 
 ggplot()+
   geom_abline(slope=1,intercept=0,color="grey")+
-  geom_point(aes(masse_specimen, masse_coca, color=SERVPOL), data=specimens)+
+  geom_point(aes(
+    masse_specimen, masse_coca, color=SERVPOL.fac),
+    data=specimens,
+    shape=1)+
   scale_y_log10()+
   scale_x_log10()+
   coord_equal()
 
 ggplot()+
-  geom_point(aes(SERVPOL, masse_hero), data=specimens)+
+  geom_point(aes(SERVPOL.fac, masse_hero), data=specimens)+
   scale_y_log10()
 
 mass.col.vec <- grep("masse_", names(specimens), value=TRUE)
 mass.tall <- melt(
   specimens,
   measure.vars=mass.col.vec,
-  id.vars=c("SPECIMEN", "SERVPOL"),
+  id.vars=c("SPECIMEN", "SERVPOL.fac"),
   variable.name="masse_type",
-  value.name="mass")
+  value.name="mass")[!is.na(mass),]
 mass.tall[, type := sub("masse_", "", masse_type)]
 
 ggplot()+
-  geom_point(aes(SERVPOL, mass, color=type), data=mass.tall)+
+  geom_point(aes(SERVPOL.fac, mass, color=type), data=mass.tall)+
   scale_y_log10()
 
-ggplot()+
+mass.stats <- mass.tall[, list(
+  median.mass=median(mass, na.rm=TRUE),
+  mean.mass=mean(mass, na.rm=TRUE)
+  ), by=list(SERVPOL.fac, type)]
+
+gg.serv.mass <- ggplot()+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "lines"))+
   facet_grid(. ~ type)+
-  geom_point(aes(SERVPOL, mass), data=mass.tall)+
-  scale_y_log10()
+  geom_point(aes(
+    SERVPOL.fac, median.mass),
+    data=mass.stats,
+    size=3,
+    color="red")+
+  geom_point(aes(SERVPOL.fac, mass), data=mass.tall)+
+  scale_y_log10("mass")
+png("figure-specimens-serv-mass.png")
+print(gg.serv.mass)
+dev.off()
+
+gg.type.mass <- ggplot()+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "lines"))+
+  facet_grid(SERVPOL.fac ~ .)+
+  geom_point(aes(
+    median.mass, type),
+    data=mass.stats,
+    size=3,
+    color="red")+
+  geom_point(aes(mass, type), data=mass.tall, shape=1)+
+  scale_x_log10("mass")
+png("figure-specimens-type-mass.png")
+print(gg.type.mass)
+dev.off()
 
 ggplot()+
   facet_grid(type ~ .)+
@@ -60,32 +97,37 @@ ggplot()+
   scale_y_log10()
 
 specimens.name.vec <- names(specimens)
-class.col <- which(specimens.name.vec=="CLASSE")
-is.after.class <- class.col < 1:length(specimens.name.vec)
-coupage.name.vec <- specimens.name.vec[is.after.class]
+coupage.name.vec <- specimens.name.vec[16:67]
 coupage.tall <- melt(
   specimens,
   measure.vars=coupage.name.vec,
-  id.vars=c("SPECIMEN", "SERVPOL"),
+  id.vars=c("SPECIMEN", "SERVPOL.fac"),
   variable.name="coupage",
   value.name="presence")
 coupage.present <- coupage.tall[presence==1,]
-coupage.counts <- specimens.present[, list(
+coupage.counts <- coupage.present[, list(
   specimens=.N
-), by=list(SERVPOL, coupage)]
+), by=list(SERVPOL.fac, coupage)]
 ggplot()+
-  geom_tile(aes(SERVPOL, coupage, fill=log10(specimens)), data=coupage.counts)+
+  geom_tile(aes(SERVPOL.fac, coupage, fill=log10(specimens)),
+            data=coupage.counts)+
   scale_fill_gradient(low="grey95", high="red")
 
-servpol.counts <- coupage.counts[, list(servpols=.N), by=coupage]
-coupage.levels <- servpol.counts[order(servpols), coupage]
+servpol.counts <- coupage.counts[, list(
+  servpols=.N,
+  specimens=sum(specimens)
+), by=coupage]
+coupage.levels <- servpol.counts[order(servpols, specimens), coupage]
 coupage.counts[, coupage.fac := factor(coupage, coupage.levels)]
-ggplot()+
-  geom_tile(aes(SERVPOL, coupage.fac, fill=log10(specimens)),
+gg.tile <- ggplot()+
+  geom_tile(aes(SERVPOL.fac, coupage.fac, fill=log10(specimens)),
             data=coupage.counts)+
   scale_fill_gradient(low="grey95", high="red")+
-  geom_text(aes(SERVPOL, coupage.fac, label=specimens),
+  geom_text(aes(SERVPOL.fac, coupage.fac, label=specimens),
             data=coupage.counts)
+png("figure-specimens-coupage-servpol.png")
+print(gg.tile)
+dev.off()
 
 ## Exercise: how could you sort the rows by 
 

@@ -512,6 +512,25 @@ use R in your field)
 - There are a variety of resources online and in real life to help you
   find packages for particular problems.
 
+** End of first half-day class
+
+   Thanks for participating in this first introduction to R programming
+   class. Please fill out a short survey and read the following before
+   the next class.
+
+*** Survey
+
+    https://docs.google.com/forms/d/e/1FAIpQLSfTYlOBCPs7eYLRmgs_L5nCOvPEJcooSRlNy8DWScWwvAnEyA/viewform?usp=sf_link
+
+*** Homework / further reading
+
+    Patrick Burns' [[http://www.burns-stat.com/documents/tutorials/impatient-r/][Impatient R]].
+
+    #+BEGIN_SRC R
+  vignette("datatable-intro", package="data.table")
+  vignette("datatable-reshape", package="data.table")
+    #+END_SRC
+
 ** data.table, an efficient package for data manipulation
 
 *** Introduction to data.frame
@@ -649,6 +668,10 @@ advantage for =fread=.
   system.time(big.dt <- fread("overlap-benchmark/chip-seq.bedGraph"))
 #+END_SRC
 
+Caveat: fread is newer than read.table/read.csv, so may not work for
+some very strange (badly formatted) CSV files. In that case, try
+=read.table= or =read.csv=.
+
 *** Converting between long and wide data (melt and dcast)
 
 Work examples from [[https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html][data.table reshape vignette]] on the R command line.
@@ -758,27 +781,33 @@ human-readable vector of seconds, minutes, etc). For more info read
 data.table converts it to the more efficient =POSIXct= type (with a
 warning).
 
-*Exercise:* the =Sys.time()= function gives the current time. 
-- Use subtraction to compute the age of each child in days, and store
-  that in a new column =age_child_days=. What is the type of that column?
-  (use both =str= and =typeof=) 
+*Exercise:* Compute the age of each child.
+- The =Sys.time()= function gives the current time. Use subtraction to
+  compute the age of each child in days, and store that in a new
+  column =age_child_days=. What is the type of that column?  (use both
+  =str= and =typeof=)
 - Divide by 365 to get the approximate age in years, and store that in
   a new column =age_child_years_num=. 
 - Subtract from =age_mother= to get a new column =age_diff= -- what is
   the smallest value of =age_diff=? What does this tell you about
   storing ages rather than dates?
 
+The code below displays the two new variables that we have computed,
+and sorts the rows by the age of the mother.
+
 #+BEGIN_SRC R
   children[order(age_mother), list(age_mother, age_child_years_num, age_diff)]
 #+END_SRC
 
-What if we wanted to compute the age in years that we say in response
-to the question, "how old are you?" That is more complicated, because
-the number of days per year is not constant (usually 365 days per
-year, but 366 days in each leap year). We can do that by using
-subtraction on the years, and then comparing the current and birth
-month/day. Begin by using =strftime= to compute the current year,
-month, and day:
+*Homework:* what if we wanted to compute the age in years that we say
+in response to the question, "how old are you?" That is more
+complicated, because the number of days per year is not constant
+(usually 365 days per year, but 366 days in each leap year). Read the
+rest of this section to learn how to do this computation.
+
+We can do that by using subtraction on the years, and then comparing
+the current and birth month/day. Begin by using =strftime= to compute
+the current year, month, and day:
 
 #+BEGIN_SRC R
   cur.time <- Sys.time()
@@ -804,9 +833,11 @@ Now we compute the current year/month/day in integer format:
 columns (=dob.year=, =dob.month=, =dob.day=) of =children=.
 
 The code below first computes the =had.bday= column with is =TRUE= if
-the child had its birthday already this year. Then we compute
-=age_child_years_int= which is the common answer to the question "how
-old are you?"
+the child had its birthday already this year. Note that
+=ifelse(condition, value.if.true, value.if.false)= is used to
+determine whether or not the child's birthday has occured this
+year. Then we compute =age_child_years_int= which is the common answer
+to the question "how old are you?"
 
 #+BEGIN_SRC R
   children[, had.bday := ifelse(
@@ -817,7 +848,8 @@ old are you?"
     age_mother, age_child_years_num, age_child_years_int)]
 #+END_SRC
 
-Exception: one data set when strptime did not work for me is
+Further reading about importing dates into R: one data set when
+strptime did not work for me is
 https://github.com/tdhock/montreal-velos/blob/master/velos.R -- I had
 to use a character vector to convert non-standard month names to
 numeric dates.
@@ -825,13 +857,49 @@ numeric dates.
 Packages that attempt to simplify reading of dates and times are
 [[https://github.com/gaborcsardi/parsedate][parsedate]] and [[https://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html][lubridate]].
 
-*** DT[, values, by=var] for computing value conditional on var
+*** DT[, values, by=var] for computing values conditional on var
 
-TODO next week.
+For every family, compute the min and max age of children.
+
+#+BEGIN_SRC R
+  age.stats <- children[!is.na(age_child_years_num), list(
+    min.age=min(age_child_years_num),
+    max.age=max(age_child_years_num)
+    ), by=list(family_id, age_mother)]
+#+END_SRC
+
+*Exercise:* how would you compute mean and median age of children for
+every family?
+
+*** Joining data tables DT1[DT2, on=list(var1, var2)]
+
+What if we wanted to select all children who are older than the
+mean age of children in their family? We can join the =age.stats=
+data.table with the =children= data.table via:
+
+#+BEGIN_SRC R
+  children.stats <- age.stats[children, on=list(family_id, age_mother)]
+#+END_SRC
+
+Note that so far in this tutorial we have only used the =DT1[var <
+value, ]= syntax (logical vector for first argument of square bracket
+operator). The =DT1[DT2, ]= syntax means to perform a "join" -- for
+rows in the two tables which have the same values of =on=, we get a
+new data.table with columns from both =age.stats= and =children=
+(including =mean.age= and =age_child_years_num=).
+
+*Exercise:* use =children.stats= to compute the subset of children
+with age greater than the mean age of children in their family.
 
 *** Data output to CSV
 
-Base R has =write.csv=, data.table has =fwrite= (faster).
+To save a data.table in R to disk, base R has the =write.csv=
+function, and data.table has =fwrite= (faster).
+
+#+BEGIN_SRC R
+  children.not.na <- children[!is.na(dob),]
+  fwrite(children.not.na, "children.csv")
+#+END_SRC
 
 *** Summary
 - The data.frame object is how a CSV table is represented in base R.
@@ -842,42 +910,341 @@ Base R has =write.csv=, data.table has =fwrite= (faster).
 - =dt[, value]= returns a vector and =dt[, data.table(value1,
   value2)]= returns a =data.table=.
 - dt[, colName := value] creates or updates a column.
-- TODO
+- =strptime= converts character to numeric date/time, and =strftime=
+  does the opposite.
+- DT[, values, by=vars] computes values for each unique combination of
+  vars.
+- DT1[DT2, on=vars] joins DT1 with DT2 using the common columns vars.
+- fwrite converts a data.table in R to a CSV file on disk.
+
+** Criminology data visualization with ggplot2
+
+*** Installing ggplot2 and reading data
+
+The ggplot2 package implements Wilkinson's "Grammar of Graphics"
+([[http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html][brief history]]) which is extremely useful for creating a wide variety
+of statistical graphics for both data exploration and publication.
+
+*Exercise:* install the =ggplot2= package from CRAN, since we will be
+using it to make the plots in this section. 
+
+Begin by downloading [[file:specimens.csv]] which was kindly provided by
+Frank.
+
+*Exercise:* read the CSV file into R using =fread=, and assign it to
+the variable =specimens=.
+
+*** ggplots and aesthetic mappings
+
+Start a =ggplot()=, then add a =geom_point()= to make a scatterplot.
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_point(aes(x=SERVPOL, y=masse_coca), data=specimens)
+#+END_SRC
+
+The first argument to the =geom_= functions is the =aes=, short for
+aesthetic mapping. The aes names correspond to visual properties in
+the plot, and the values correspond to data variables. So x=SERVPOL
+means that you want to plot the SERVPOL variable on the x/horizontal
+axis, etc.
+
+*Exercise:* try plotting some other variables using the x and y
+aesthetics. Try aes(color=variable).
+
+How to know what geom and aes to use? Check
+http://docs.ggplot2.org/current/ for usage examples, or read
+=help("geom_point")=.
+
+*** Plotting numeric versus categorical variables
+
+Note that the X axis is continuous since SERVPOL is numeric. To use a
+categorical scale instead, create a new factor variable and plot that.
+
+#+BEGIN_SRC R
+  specimens[, SERVPOL.fac := factor(SERVPOL)]
+  ggplot()+
+    geom_point(aes(SERVPOL.fac, masse_coca), data=specimens)
+#+END_SRC
+
+*Exercise:* you can use =factor(values, levels)= where =levels=
+specify the order of display in the categorical axis. Make a new plot
+with SERVPOL.fac values which are decreasing from left to right (10
+... 2 1).
+
+*** Log axes scales
+
+Add =scale_y_log10()= for a log scale:
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_point(aes(SERVPOL.fac, masse_coca), data=specimens)+
+    scale_y_log10()
+#+END_SRC
+
+*Exercise:* plot =masse_hero= versus =masse_coca=. Try a log scale for
+both the x and y axes.
+
+*** Equal horizontal and vertical coordinates
+
+For scatterplots with the same units on both axes (in this case mass),
+you can use =coord_equal()= to force a 1:1 ratio between horizontal
+and vertical units, which makes it easier to compare. You can also add
+an x=y line via geom_abline(slope=1, intercept=0):
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_abline(slope=1,intercept=0,color="grey")+
+    geom_point(aes(
+      masse_specimen, masse_coca),
+      data=specimens)+
+    scale_y_log10()+
+    scale_x_log10()+
+    coord_equal()
+#+END_SRC
+
+Note that =aes= was used without specifying named arguments =x= and
+=y= -- that is fine, the first argument is =x= and the second is =y=
+(however all others must be named). Also note that since geom_abline
+is before geom_point in the code, the abline is plotted before/under
+the points.
+
+*Exercise:* move the geom_abline after the geom_point in the code --
+what happens to the plot?
+
+Also note that since only 1 abline is plotted, you don't need to
+specify the =data= argument to =geom_abline= (but you would if you
+wanted to plot several ablines, one for each row in a data.table).
+
+*** Plotting coupage counts
+
+Frank wants to analyze the frequency of the different coupage
+variables as a function of SERVPOL. 
+
+*Exercise:* begin by melting all of the coupage columns into a
+data.table called =coupage.tall= with four columns: SPECIMEN, SERVPOL,
+coupage, presence. Then save all observed coupage (presence==1) in a
+data.table called =coupage.present=, and compute counts by SERVPOL and
+coupage:
+
+#+BEGIN_SRC R
+  coupage.present <- coupage.tall[presence==1,]
+  coupage.counts <- coupage.present[, list(
+    specimens=.N
+  ), by=list(SERVPOL, coupage)]
+#+END_SRC
+
+Note that =.N= is a special symbol for data.tables which means "number
+of rows." Now plot the counts as a heatmap using =geom_tile=:
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_tile(aes(SERVPOL, coupage, fill=log10(specimens)), data=coupage.counts)
+#+END_SRC
+
+*Exercise:* the =fill= aesthetic was used to show the log10 counts of
+specimens. Instead, plot the absolute integer counts (not log
+scale). Which plot is more informative? Why?
+
+The default fill colors are not too good. You can change them with
+=scale_fill_= functions:
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_tile(aes(SERVPOL, coupage, fill=log10(specimens)), data=coupage.counts)+
+    scale_fill_gradient(low="grey95", high="red")
+#+END_SRC
+
+*Exercise:* try different colors in the fill scale. Note that all of
+R's default color names can be shown via =colors()=.
+
+Finally we use a geom_text with aes(label=specimens) to display the
+count on each tile:
+
+#+BEGIN_SRC R
+  ggplot()+
+    geom_tile(aes(SERVPOL, coupage, fill=log10(specimens)),
+              data=coupage.counts)+
+    scale_fill_gradient(low="grey95", high="red")+
+    geom_text(aes(SERVPOL, coupage, label=specimens),
+              data=coupage.counts)
+#+END_SRC
+
+*** Some homework
+
+*Exercise:* right now the coupage values on the y axis are ordered
+alphabetically, which does not help understand the data. Can you make
+a plot with the coupage values on the y axis ordered by SERVPOL
+counts? (for example vanilline was only observed in 1 SERVPOL, but
+cafeine was observed in 8) First create a new =coupage.fac= variable
+which is a factor with levels that are ordered according to how many
+distinct SERVPOLs it was observed in (Hint: use by=coupage). Then use
+aes(y=coupage.fac) in the geom_tile to make the plot. To break ties
+(for example vanilline has only 1 specimen in 1 SERVPOL, but tramadol
+has 4 specimens in 1 SERVPOL), try =order(servpols, specimens)=. You
+should get a plot that looks like the one below.
+
+[[file:figure-specimens-coupage-servpol.png]]
+
+*Exercise:* install the RColorBrewer package and use
+=display.brewer.all()= to see some color palettes that are very easy
+to read (they are a result of years of visual perception
+research). There are three groups of palettes, and the first group is
+for numerical values that do not include zero. Pick one of these and
+use it for the heatmap in the section above. Hint: use the
+=brewer.pal= function to get a vector of hex color codes.
+
+*Exercise:* what if we wanted to make a plot that compares the values
+of all of the mass variables? Melt specimens, using the mass columns
+as the =measure.vars=, then use =ggplot()+facet_grid(. ~ variable)= to
+produce a multi-panel plot like the one below. Note that the red dots
+show the median (compute using by=variable in the melted data.table).
+
+[[file:figure-specimens-serv-mass.png]]
+
+*Exercise:* use =table= to compute contingency tables (counts).
+
+#+BEGIN_SRC R
+  specimens[, table(Type)]
+  specimens[, table(STUP)]
+  specimens[, table(STUP, Type)]
+#+END_SRC
+
+Use =geom_bar= to plot those numbers. How could you plot
+those numbers using =geom_point=?
+
+*** Summary
+- Install the =ggplot2= package to use the powerful grammar of
+  graphics for data visualization.
+- Start with =ggplot()= and then add geoms like =geom_point()=,
+  =geom_tile()=, and =geom_text()=.
+- Use =factor(values, levels)= to specify a categorical variable which
+  will be ordered according to =levels=.
+- Use =scale_y_log10()= for log scale axes.
+- Use =coord_equal()= and =geom_abline()= when x and y axes have the
+  same units.
+- Use =scale_fill_gradient()= to specify a custom fill colors.
+- Further reading:
+http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html
 
 ** Extra topics
-*** Data visualization with ggplot2
-http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html
 *** Named capture regular expressions
 
-https://github.com/tdhock/regex-tutorial
+These are useful when data is in some structured text format other
+than CSV. For example in [[file:specimens.csv]] the SAISIE column is the
+seizure ID number which looks like 
 
+#+BEGIN_SRC R-transcript
+> specimens[, list(SAISIE)]
+         SAISIE
+   1: 011_01.13
+   2: 014_01.13
+   3: 016_01.13
+   4: 016_01.13
+   5: 016_01.13
+  ---          
+2056: 475_12.13
+2057: 476_12.13
+2058: 476_12.13
+2059: 476_12.13
+2060: 477_12.13
+> 
+#+END_SRC
+
+We can use the following named capture regular expression pattern to
+extract the three numbers:
+
+#+BEGIN_SRC R
+  saisie.pattern <- paste0(
+    "(?<id>[0-9]+)",
+    "_",
+    "(?<month>[0-9]+)",
+    "[.]",
+    "(?<year>[0-9]+)")
+  match.df <- namedCapture::str_match_named(
+    specimens$SAISIE, saisie.pattern, list(
+      id=as.integer,
+      month=as.integer,
+      year=as.integer))
+#+END_SRC
+
+The =match.df= is a data.frame with columns for each capture group
+(?<name>subpattern) in the regular expression pattern:
+
+#+BEGIN_SRC R-transcript
+> data.table(SAISIE=specimens$SAISIE, match.df)
+         SAISIE  id month year
+   1: 011_01.13  11     1   13
+   2: 014_01.13  14     1   13
+   3: 016_01.13  16     1   13
+   4: 016_01.13  16     1   13
+   5: 016_01.13  16     1   13
+  ---                         
+2056: 475_12.13 475    12   13
+2057: 476_12.13 476    12   13
+2058: 476_12.13 476    12   13
+2059: 476_12.13 476    12   13
+2060: 477_12.13 477    12   13
+> 
+#+END_SRC
+
+For more info please read https://github.com/tdhock/regex-tutorial
+
+*** for/while loops and if statements
+
+A lot of R code for data analysis can be written without any for/while
+loops at all. Before writing a for/while loop, it is a good idea to
+ask yourself:
+- Could I use by=vars in a data.table instead? If so, then it will
+  probably be faster than a for/while loop.
+- Can I express the computation in terms of matrix/array operations or
+  vectorized functions like =cumsum=? If so, then it will probably be
+  faster than a for/while loop.
+You definitely should use a for loop when it should produce more than
+one data.table -- in that case, use the "list of data.tables"
+idiom. For example, say you have several data sets and you want to fit
+a model to each, then save both the data and the model for later
+analysis. The R code below is not executable, but it shows the main
+idea of the idiom.
+
+#+BEGIN_SRC R
+  ## First, initialize an empty list for each data type.
+  data.list <- list()
+  models.list <- list()
+  data.file.vec <- Sys.glob("data/*.csv")
+  for(data.file in data.file.vec){
+    dt <- fread(data.file)
+    model.dt <- get.model.dt(dt)
+    ## Save data and models using named list elements.
+    data.list[[data.file]] <- dt
+    models.list[[data.file]] <- model.dt
+  }
+  ## Combine data and model tables using rbind, which is short for row
+  ## bind -- stacking rows from different data.tables on top of each
+  ## other to form a big data.table.
+  data.and.models <- list(
+    data=do.call(rbind, data.list),
+    models=do.call(rbind, models.list))
+#+END_SRC
+
+Some real examples of this idiom:
+- [[http://members.cbio.mines-paristech.fr/~thocking/animint-book/Ch02-ggplot2.html][Ch2 of the Animint Designer Manual]], where a for loop is used to
+  create data for two geometric plot elements (path and point).
+- [[https://github.com/tdhock/change-tutorial/blob/master/Segmentor.models.R][Fitting changepoint models to the neuroblastoma data set]], where a
+  for loop is used to compute data.tables which represent two
+  different components of the changepoint model (loss and segments).
+- [[https://github.com/tdhock/montreal-velos/blob/master/velos.R][Reading bike count data files]], [[https://github.com/tdhock/montreal-velos/blob/master/velos.dt.R][but in this example the for loop
+  could be replaced with by=csv in a data.table]].
+
+The =if= statement can be used to perform some computations only when
+they are necessary (depending on the data). This is especially useful
+inside of for loops, see above examples. 
+
+More reading =help("if")=
 
 *** Reading and writing files from other programs in R
 
 SAS, SPSS, STATA http://haven.tidyverse.org/
 
 Excel -- just save as CSV. Or use http://readxl.tidyverse.org/
-
-*** for/while/if
-
-TODO list of data.tables idiom.
-
-** For next time
-
-Thanks for participating in this first introduction to R programming
-class. Please fill out a short survey and read the following before
-the next class.
-
-*** Survey
-
-https://docs.google.com/forms/d/e/1FAIpQLSfTYlOBCPs7eYLRmgs_L5nCOvPEJcooSRlNy8DWScWwvAnEyA/viewform?usp=sf_link
-
-*** Homework / further reading
-
-Patrick Burns' [[http://www.burns-stat.com/documents/tutorials/impatient-r/][Impatient R]].
-
-#+BEGIN_SRC R
-  vignette("datatable-intro", package="data.table")
-  vignette("datatable-reshape", package="data.table")
-#+END_SRC
 
